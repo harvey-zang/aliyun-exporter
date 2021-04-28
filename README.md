@@ -1,7 +1,10 @@
 # 阿里云 Exporter
 
 阿里云云监控的 Prometheus Exporter. 
-基于github开源项目，增加了cdn的回源带宽和回源状态码的监控数据抓取。
+基于开源项目二次开发
+解耦监控，拆解为CMS、RDS、 CDN、SLB、Mongdb等collector，分别注册到prometheus_client
+增加阿里云ecs和阿里云redis过期续费监控
+增加了aliyun CDN的回源带宽和回源状态码的监控数据抓取
 之后希望可以利用Flask-PluginKit改写成插件式增加/删减metrics。
 
 ## 安装
@@ -31,7 +34,7 @@ metrics:
 启动 Exporter
 
 ```bash
-> aliyun-exporter -p 9525 -c aliyun-exporter.yml
+> aliyun-exporter -p 9525 -c conf/aliyun-exporter.yml
 ```
 
 访问 [localhost:9525/metrics](http://localhost:9525/metrics) 查看指标抓取是否成功
