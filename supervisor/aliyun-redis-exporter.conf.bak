@@ -1,0 +1,9 @@
+[program:aliyun-redis-exporter]
+command=python3 /opt/aliyun-redis-exporter/aliyun-exporter.py -p 9525 -c /opt/aliyun-redis-exporter/aliyun-redis-exporter.yml
+user=ops
+stderr_logfile = /var/log/supervisor/aliyun-redis-exporter_err.log
+stdout_logfile = /var/log/supervisor/aliyun-redis-exporter_stdout.log
+directory = /opt/aliyun-redis-exporter
+autostart=true
+autorestart=true
+startsecs=5

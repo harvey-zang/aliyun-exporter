@@ -1,0 +1,113 @@
+credential:
+  access_key_id: <YOUR_ACCESS_KEY_ID>
+  access_key_secret: <YOUR_ACCESS_KEY_SECRET>
+  region_id: cn-beijing
+
+metrics:
+  acs_slb_dashboard:
+  - name: HeathyServerCount
+    period: 300
+  - name: UnhealthyServerCount
+    period: 300
+  - name: InstanceTrafficRX
+    period: 300
+  - name: InstanceTrafficTX
+    period: 300
+  - name: PacketRX
+    period: 300
+  - name: PacketTX
+    period: 300
+  - name: InstancePacketRX
+    period: 300
+  - name: InstancePacketTX
+    period: 300
+  - name: InstanceDropConnection
+    period: 300
+  - name: InstanceActiveConnection
+    period: 300
+  - name: InstanceMaxConnection
+    period: 300
+  - name: InstanceNewConnection
+    period: 300
+  - name: InstanceMaxConnectionUtilization
+    period: 300
+  - name: InstanceNewConnectionUtilization
+    period: 300
+  - name: DropTrafficRX
+    period: 300
+  - name: DropTrafficTX
+    period: 300
+  - name: DropPacketRX
+    period: 300
+  - name: DropPacketTX
+    period: 300
+  - name: DropConnection
+    period: 300
+  - name: TrafficRXNew
+    period: 300
+  - name: TrafficTXNew
+    period: 300
+  - name: ActiveConnection
+    period: 300
+  - name: InactiveConnection
+    period: 300
+  - name: NewConnection
+    period: 300
+  - name: MaxConnection
+    period: 300
+#  - name: QPS
+#    period: 300
+  - name: Rt
+    period: 300
+  - name: StatusCode2xx
+    period: 300
+  - name: StatusCode3xx
+    period: 300
+  - name: StatusCode4xx
+    period: 300
+  - name: StatusCode5xx
+    period: 300
+  - name: StatusCodeOther
+    period: 300
+  - name: UpstreamCode4xx
+    period: 300
+  - name: UpstreamCode5xx
+    period: 300
+  - name: UpstreamRt
+    period: 300
+  - name: InstanceRt
+    period: 300
+  - name: InstanceStatusCode2xx
+    period: 300
+  - name: InstanceStatusCode3xx
+    period: 300
+  - name: InstanceStatusCode4xx
+    period: 300
+  - name: InstanceStatusCode5xx
+    period: 300
+  - name: InstanceStatusCodeOther
+    period: 300
+  - name: InstanceUpstreamRt
+    period: 300
+  - name: InstanceQpsUtilization
+    period: 300
+  - name: InstanceDropPacketRX
+    period: 300
+  - name: InstanceDropPacketTX
+    period: 300
+  - name: InstanceDropTrafficRX
+    period: 300
+  - name: InstanceDropTrafficTX
+    period: 300
+  - name: Qps
+    period: 300
+  - name: InstanceQps
+    period: 300
+  - name: InstanceUpstreamCode4xx
+    period: 300
+  - name: InstanceUpstreamCode5xx
+    period: 300
+
+#info_metrics:
+#  - slb
+

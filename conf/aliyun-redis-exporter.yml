@@ -1,0 +1,116 @@
+credential:
+  access_key_id: <YOUR_ACCESS_KEY_ID>
+  access_key_secret: <YOUR_ACCESS_KEY_SECRET>
+  region_id: cn-beijing
+
+metrics:
+  acs_kvstore:
+  - name: ShardingAvgRt
+    period: 60
+  - name: ShardingConnectionUsage
+    period: 60
+  - name: ShardingCpuUsage
+    period: 60
+  - name: ShardingEvictedKeys
+    period: 60
+  - name: ShardingExpiredKeys
+    period: 60
+  - name: ShardingHitRate
+    period: 60
+  - name: ShardingIntranetIn
+    period: 60
+  - name: ShardingIntranetInRatio
+    period: 60
+  - name: ShardingIntranetOut
+    period: 60
+  - name: ShardingIntranetOutRatio
+    period: 60
+  - name: ShardingKeys
+    period: 60
+  - name: ShardingMaxRt
+    period: 60
+  - name: ShardingMemoryUsage
+    period: 60
+  - name: ShardingQPSUsage
+    period: 60
+  - name: ShardingUsedConnection
+    period: 60
+  - name: ShardingUsedMemory
+    period: 60
+  - name: ShardingUsedQPS
+    period: 60
+
+  - name: StandardAvgRt
+    period: 60
+  - name: StandardConnectionUsage
+    period: 60
+  - name: StandardCpuUsage
+    period: 60
+  - name: StandardEvictedKeys
+    period: 60
+  - name: StandardExpiredKeys
+    period: 60
+  - name: StandardFailedCount
+    period: 60
+  - name: StandardHitRate
+    period: 60
+  - name: StandardIntranetIn
+    period: 60
+  - name: StandardIntranetInRatio
+    period: 60
+  - name: StandardIntranetOut
+    period: 60
+  - name: StandardIntranetOutRatio
+    period: 60
+  - name: StandardKeys
+    period: 60
+  - name: StandardMaxRt
+    period: 60
+  - name: StandardMemoryUsage
+    period: 60
+  - name: StandardQPSUsage
+    period: 60
+  - name: StandardUsedConnection
+    period: 60
+  - name: StandardUsedMemory
+    period: 60
+  - name: StandardUsedQPS
+    period: 60
+
+  - name: SplitrwAvgRt
+    period: 60
+  - name: SplitrwConnectionUsage
+    period: 60
+  - name: SplitrwCpuUsage
+    period: 60
+  - name: SplitrwEvictedKeys
+    period: 60
+  - name: SplitrwExpiredKeys
+    period: 60
+  - name: SplitrwExpires
+    period: 60
+  - name: SplitrwFailedCount
+    period: 60
+  - name: SplitrwHitRate
+    period: 60
+  - name: SplitrwIntranetIn
+    period: 60
+  - name: SplitrwIntranetInRatio
+    period: 60
+  - name: SplitrwIntranetOut
+    period: 60
+  - name: SplitrwIntranetOutRatio
+    period: 60
+  - name: SplitrwMaxRt
+    period: 60
+  - name: SplitrwMemoryUsage
+    period: 60
+  - name: SplitrwQPSUsage
+    period: 60
+  - name: SplitrwUsedConnection
+    period: 60
+  - name: SplitrwUsedMemory
+    period: 60
+  - name: SplitrwUsedQPS
+    period: 60
+

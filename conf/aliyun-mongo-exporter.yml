@@ -1,0 +1,44 @@
+credential:
+  access_key_id: <YOUR_ACCESS_KEY_ID>
+  access_key_secret: <YOUR_ACCESS_KEY_SECRET>
+  region_id: cn-beijing
+
+metrics:
+  acs_mongodb:
+  - name: CPUUtilization
+    period: 300
+  - name: MemoryUtilization
+    period: 300
+  - name: DiskUtilization
+    period: 300
+  - name: IOPSUtilization
+    period: 300
+  - name: ConnectionUtilization
+    period: 300
+  - name: QPS
+    period: 300
+  - name: ConnectionAmount
+    period: 300
+  - name: InstanceDiskAmount
+    period: 300
+  - name: DataDiskAmount
+    period: 300
+  - name: LogDiskAmount
+    period: 300
+  - name: IntranetIn
+    period: 300
+  - name: IntranetOut
+    period: 300
+  - name: NumberRequests
+    period: 300
+  - name: OpInsert
+    period: 300
+  - name: OpQuery
+    period: 300
+  - name: OpDelete
+    period: 300
+  - name: OpGetmore
+    period: 300
+  - name: OpCommand
+    period: 300
+

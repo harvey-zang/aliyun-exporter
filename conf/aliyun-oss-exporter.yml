@@ -1,0 +1,287 @@
+credential:
+  access_key_id: <YOUR_ACCESS_KEY_ID>
+  access_key_secret: <YOUR_ACCESS_KEY_SECRET>
+  region_id: cn-beijing
+
+metrics:
+  acs_oss_dashboard:
+  - name: AppendObjectCount
+    period: 60
+    measure: Value
+  - name: AppendObjectE2eLatency
+    period: 60
+    measure: Value
+  - name: AppendObjectServerLatency
+    period: 60
+    measure: Value
+  - name: AuthorizationErrorCount
+    period: 60
+    measure: Value
+  - name: AuthorizationErrorRate
+    period: 60
+    measure: Value
+  - name: Availability
+    period: 60
+    measure: Value
+  - name: CdnRecv
+    period: 60
+    measure: Value
+  - name: CdnSend
+    period: 60
+    measure: Value
+  - name: ClientOtherErrorCount
+    period: 60
+    measure: Value
+  - name: ClientOtherErrorRate
+    period: 60
+    measure: Value
+  - name: ClientTimeoutErrorCount
+    period: 60
+    measure: Value
+  - name: ClientTimeoutErrorRate
+    period: 60
+    measure: Value
+  - name: CopyObjectCount
+    period: 60
+    measure: Value
+  - name: CopyObjectE2eLatency
+    period: 60
+    measure: Value
+  - name: CopyObjectServerLatency
+    period: 60
+    measure: Value
+  - name: DeleteObjectCount
+    period: 60
+    measure: Value
+  - name: DeleteObjectsCount
+    period: 60
+    measure: Value
+  - name: GetObjectCount
+    period: 60
+    measure: Value
+  - name: GetObjectE2eLatency
+    period: 60
+    measure: Value
+  - name: GetObjectServerLatency
+    period: 60
+    measure: Value
+  - name: HeadObjectCount
+    period: 60
+    measure: Value
+  - name: HeadObjectE2eLatency
+    period: 60
+    measure: Value
+  - name: HeadObjectServerLatency
+    period: 60
+    measure: Value
+  - name: InternetRecv
+    period: 60
+    measure: Value
+  - name: InternetSend
+    period: 60
+    measure: Value
+  - name: IntranetRecv
+    period: 60
+    measure: Value
+  - name: IntranetSend
+    period: 60
+    measure: Value
+  - name: MaxAppendObjectE2eLatency
+    period: 60
+    measure: Value
+  - name: MaxAppendObjectServerLatency
+    period: 60
+    measure: Value
+  - name: MaxCopyObjectE2eLatency
+    period: 60
+    measure: Value
+  - name: MaxCopyObjectServerLatency
+    period: 60
+    measure: Value
+  - name: MaxGetObjectE2eLatency
+    period: 60
+    measure: Value
+  - name: MaxGetObjectServerLatency
+    period: 60
+    measure: Value
+  - name: MaxHeadObjectE2eLatency
+    period: 60
+    measure: Value
+  - name: MaxHeadObjectServerLatency
+    period: 60
+    measure: Value
+  - name: MaxPostObjectE2eLatency
+    period: 60
+    measure: Value
+  - name: MaxPostObjectServerLatency
+    period: 60
+    measure: Value
+  - name: MaxPutObjectE2eLatency
+    period: 60
+    measure: Value
+  - name: MaxPutObjectServerLatency
+    period: 60
+    measure: Value
+  - name: MaxUploadPartCopyE2eLatency
+    period: 60
+    measure: Value
+  - name: MaxUploadPartCopyServerLatency
+    period: 60
+    measure: Value
+  - name: MaxUploadPartE2eLatency
+    period: 60
+    measure: Value
+  - name: MaxUploadPartServerLatency
+    period: 60
+    measure: Value
+  - name: MirrorAverageLatency
+    period: 60
+    measure: Value
+  - name: MirrorAverageLatencyByStatus
+    period: 60
+    measure: Value
+  - name: MirrorRequestCount
+    period: 60
+    measure: Value
+  - name: MirrorRequestCountByStatus
+    period: 60
+    measure: Value
+  - name: MirrorRequestTransferSpeed
+    period: 60
+    measure: Value
+  - name: MirrorRequestTransferSpeedByStatus
+    period: 60
+    measure: Value
+  - name: MirrorTraffic
+    period: 60
+    measure: Value
+  - name: MirrorTrafficByStatus
+    period: 60
+    measure: Value
+  - name: NetworkErrorCount
+    period: 60
+    measure: Value
+  - name: NetworkErrorRate
+    period: 60
+    measure: Value
+  - name: PostObjectCount
+    period: 60
+    measure: Value
+  - name: PostObjectE2eLatency
+    period: 60
+    measure: Value
+  - name: PostObjectServerLatency
+    period: 60
+    measure: Value
+  - name: PutObjectCount
+    period: 60
+    measure: Value
+  - name: PutObjectE2eLatency
+    period: 60
+    measure: Value
+  - name: PutObjectServerLatency
+    period: 60
+    measure: Value
+  - name: RedirectCount
+    period: 60
+    measure: Value
+  - name: RedirectRate
+    period: 60
+    measure: Value
+  - name: RequestValidRate
+    period: 60
+    measure: Value
+  - name: ResourceNotFoundErrorCount
+    period: 60
+    measure: Value
+  - name: ResourceNotFoundErrorRate
+    period: 60
+    measure: Value
+  - name: ServerErrorCount
+    period: 60
+    measure: Value
+  - name: ServerErrorRate
+    period: 60
+    measure: Value
+  - name: SuccessCount
+    period: 60
+    measure: Value
+  - name: SuccessRate
+    period: 60
+    measure: Value
+  - name: SyncRecv
+    period: 60
+    measure: Value
+  - name: SyncSend
+    period: 60
+    measure: Value
+  - name: TotalRequestCount
+    period: 60
+    measure: Value
+  - name: UploadPartCopyCount
+    period: 60
+    measure: Value
+  - name: UploadPartCopyE2eLatency
+    period: 60
+    measure: Value
+  - name: UploadPartCopyServerLatency
+    period: 60
+    measure: Value
+  - name: UploadPartCount
+    period: 60
+    measure: Value
+  - name: UploadPartE2eLatency
+    period: 60
+    measure: Value
+  - name: UploadPartServerLatency
+    period: 60
+    measure: Value
+  - name: UserAuthorizationErrorCount
+    period: 60
+    measure: Value
+  - name: UserAuthorizationErrorRate
+    period: 60
+    measure: Value
+  - name: UserAvailability
+    period: 60
+    measure: Value
+  - name: UserCdnRecv
+    period: 60
+    measure: Value
+  - name: UserCdnSend
+    period: 60
+    measure: Value
+  - name: UserClientOtherErrorCount
+    period: 60
+    measure: Value
+  - name: UserClientOtherErrorRate
+    period: 60
+    measure: Value
+  - name: UserClientTimeoutErrorCount
+    period: 60
+    measure: Value
+  - name: UserClientTimeoutErrorRate
+    period: 60
+    measure: Value
+  - name: UserInternetRecv
+    period: 60
+    measure: Value
+  - name: UserInternetSend
+    period: 60
+    measure: Value
+  - name: UserIntranetRecv
+    period: 60
+    measure: Value
+  - name: ValidRequestCount
+    period: 60
+    measure: Value
+  - name: MeteringStorageUtilization
+    period: 3600
+    measure: Value
+  - name: MeteringGetRequest
+    period: 3600
+    measure: Value
+  - name: MeteringPutRequest
+    period: 3600
+    measure: Value
+

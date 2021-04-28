@@ -1,0 +1,32 @@
+credential:
+  access_key_id: <YOUR_ACCESS_KEY_ID>
+  access_key_secret: <YOUR_ACCESS_KEY_SECRET>
+  region_id: cn-beijing
+
+metrics:
+  acs_cdn:
+  - name: BPS
+    period: 60
+  - name: EsCode4xx
+    period: 60
+  - name: GroupBPS
+    period: 60
+  - name: GroupInternetOut
+    period: 60
+  - name: QPS
+    period: 60
+  - name: code4xx
+    period: 60
+  - name: code5xx
+    period: 60
+  - name: hitRate
+    period: 60
+  - name: InternetOut
+    period: 60
+    # measure: Sum
+
+  cdn_performance:
+  # - name: DescribeDomainSrcHttpCodeData
+  # - name: DescribeDomainSrcBpsData
+  - name: DescribeDomainRealTimeSrcHttpCodeData
+  - name: DescribeDomainRealTimeSrcBpsData

@@ -1,68 +1,18 @@
-# Prometheus Exporter for Alibaba Cloud
+# 阿里云 Exporter
 
-# Note: This repository has been archived due to lacking of human power.
+阿里云云监控的 Prometheus Exporter. 
+基于github开源项目，增加了cdn的回源带宽和回源状态码的监控数据抓取。
+之后希望可以利用Flask-PluginKit改写成插件式增加/删减metrics。
 
-![license](https://img.shields.io/hexpm/l/plug.svg)
-[![help wanted](https://img.shields.io/github/issues/aylei/aliyun-exporter/help%20wanted.svg)](https://github.com/aylei/aliyun-exporter/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)
-[![pypi](https://img.shields.io/pypi/v/aliyun-exporter.svg)](https://pypi.org/project/aliyun-exporter/)
-[![docker](https://img.shields.io/docker/pulls/aylei/aliyun-exporter.svg)](https://cloud.docker.com/u/aylei/repository/docker/aylei/aliyun-exporter)
-[![Build Status](https://travis-ci.org/aylei/aliyun-exporter.svg?branch=master)](https://travis-ci.org/aylei/aliyun-exporter)
-
-[中文](./README_cn.md)
-
-* [Features](#features)
-* [Screenshots](#screenshots)
-* [Quick Start](#quick-start)
-* [Installation](#installation)
-* [Usage](#usage)
-* [Docker Image](#docker-image)
-* [Configuration](#configuration)
-* [Metrics Meta](#metrics-meta)
-* [Scale and HA Setup](#scale-and-ha-setup)
-* [Contribute](#contribute)
-
-This Prometheus exporter collects metrics from the [CloudMonitor API](https://partners-intl.aliyun.com/help/doc-detail/51939.htm) of Alibaba Cloud. It can help you:
-
-* integrate CloudMonitor to your Monitoring System.
-* leverage the power of PromQL, Alertmanager and Grafana(see [Screenshots](#)).
-* analyze metrics however you want.
-* save money. Api invocation is far cheaper than other services provided by CloudMonitor.
-
-This project also provides an out-of-box solution for full-stack monitoring of Alibaba Cloud, including dashboards, alerting and diagnosing.
-
-## Screenshots
-
-![gif](/static/img/stack.gif)
-
-[more screenshots here](./screenshots.md)
-
-## Quick Start
-
-A docker-compose stack is provided to launch the entire monitoring stack with Aliyun-Exporter, Prometheus, Grafana and Alertmanager.
-
-Pre-requisites: docker 1.17+
-
-```bash
-git clone git@github.com:aylei/aliyun-exporter.git
-cd docker-compose
-ALIYUN_ACCESS_ID=YOUR_ACCESS_ID ALIYUN_ACCESS_SECRET=YOUR_ACCESS_KEY docker-compose up
-```
-
-Investigate dashboards in [localhost:3000](http://localhost:3000) (the default credential for Grafana is admin:admin).
-
-For more details, see [Docker Compose](#docker-compose).
-
-## Installation
-
-Python 3.5+ is required.
+## 安装
 
 ```bash
 pip3 install aliyun-exporter
 ```
 
-## Usage
+## 使用
 
-Config your credential and interested metrics:
+首先需要在配置文件中写明阿里云的 `Access Key` 以及需要拉取的云监控指标，例子如下：
 
 ```yaml
 credential:
@@ -78,131 +28,65 @@ metrics:
     period: 300
 ```
 
-Run the exporter:
+启动 Exporter
 
 ```bash
 > aliyun-exporter -p 9525 -c aliyun-exporter.yml
 ```
 
-The default port is 9525, default config file location is `./aliyun-exporter.yml`.
+访问 [localhost:9525/metrics](http://localhost:9525/metrics) 查看指标抓取是否成功
 
-Visit metrics in [localhost:9525/metrics](http://localhost:9525/metrics)
 
-## Docker Image
+## Grafana 看板
 
-Install
-```bash
-docker pull aylei/aliyun-exporter:0.3.1
-```
+预配置了一些 Grafana 看板. 见[Screenshots](#screenshots)
 
-To run the container, external configuration file is required:
-```bash
-docker run -p 9525:9525 -v $(pwd)/aliyun-exporter.yml:$(pwd)/aliyun-exporter.yml aylei/aliyun-exporter:0.3.1 -c $(pwd)/aliyun-exporter.yml
-```
-
-## Configuration
+## 配置
 
 ```yaml
-rate_limit: 5 # request rate limit per second. default: 10
+rate_limit: 5 # 限流配置，每秒请求次数. 默认值: 10
 credential:
-  access_key_id: <YOUR_ACCESS_KEY_ID> # required
-  access_key_secret: <YOUR_ACCESS_KEY_SECRET> # required
-  region_id: <REGION_ID> # default: 'cn-hangzhou'
+  access_key_id: <YOUR_ACCESS_KEY_ID> # 必填
+  access_key_secret: <YOUR_ACCESS_KEY_SECRET> # 必填
+  region_id: <REGION_ID> # 默认值: 'cn-hangzhou'
   
-metrics: # required, metrics specifications
-  acs_cdn: # required, Project Name of CloudMonitor
-  - name: QPS # required, Metric Name of CloudMonitor, belongs to a certain Project
-    rename: qps # rename the related prometheus metric. default: same as the 'name'
-    period: 60 # query period. default: 60
-    measure: Average # measure field in the response. default: Average
-
-info_metrics:
-  - ecs
-  - rds
-  - redis
+metrics: # 必填, 目标指标配置
+  acs_cdn: # 必填，云监控中定义的 Project 名字
+  - name: QPS # 必填, 云监控中定义的指标名字
+    rename: qps # 选填，定义对应的 Prometheus 指标名字，默认与云监控指标名字一致
+    period: 60 # 选填，默认 60
+    measure: Average # 选填，响应体中的指标值字段名，默认 'Average'
 ```
 
-Notes:
+提示：
 
-* Find your target metrics using [Metrics Meta](#metrics-meta)
-* CloudMonitor API has an rate limit, tuning the `rate_limit` configuration if the requests are rejected.
-* CloudMonitor API also has an monthly quota for invocations (AFAIK, 5,000,000 invocations / month for free). Plan your usage in advance. 
+* [云监控-预设监控项参考](https://help.aliyun.com/document_detail/28619.html?spm=a2c4g.11186623.6.670.4cb92ea7URJUmT) 可以查询 Project 与对应的指标
+* 云监控 API 有限流，假如被限流了可以调整限流配置
+* 云监控 API 每月调用量前 500 万次免费，需要计划好用量
 
-> Given that you have 50 metrics to scrape with 60s scrape interval, about 2,160,000 requests will be sent by the exporter for 30 days.
+> 假如配置了 50 个指标，再配置 Prometheus 60秒 抓取一次 Exporter，那么 30 天大约会用掉 2,160,000 次请求
 
-## Special Project
+## 特殊的 Project
 
-Some metrics are not included in the Cloud Monitor API. For these metrics, we keep the configuration abstraction consistent by defining special projects.
+有一些指标没有在云监控 API 中暴露, 为了保持配置的一致性, 我们定义了一些特殊 Project 来配置这些指标.
 
-Special Projects:
+所有的特殊 Project:
 
-* `rds_performance`: RDS performance metrics, available metric names: [Performance parameter table](https://www.alibabacloud.com/help/doc-detail/26316.htm?spm=a2c63.p38356.b99.361.694917e6Rtuu9i)
+* `rds_performance`: RDS 的详细性能数据, 可选的指标名可以在这里找到: [性能参数表](https://help.aliyun.com/document_detail/26316.html?spm=a2c4g.11186623.4.3.764b2c01QbzUdY)
+* `cdn_performance`: CDN 的详细性能数据, 可选的指标名可以在这里找到: [性能参数表](https://help.aliyun.com/document_detail/106661.html?spm=a2c4g.11186623.6.734.175f45c3ZiX4xv)
 
-> An example configuration file of special project is provided as `special-projects.yml`
 
-**Note**: special projects invokes different API with ordinary metrics, so it will not consume your Cloud Monitor API invocation quota. But the API of special projects could be slow, so it is recommended to separate special projects into a standalone exporter instance.
+## 自监控
 
-## Metrics Meta
+`cloudmonitor_request_latency_seconds` 和 `cloudmonitor_failed_request_latency_seconds` 中记录了对 CloudMonitor API 的调用情况。
 
-`aliyun-exporter` shipped with a simple site hosting the metrics meta from the CloudMonitor API. You can visit the metric meta in [localhost:9525](http://localhost:9525) after launching the exporter.
+每一个 CloudMonitor 指标都有一个对应的 `aliyun_{project}_{metric}_up` 来表明该指标是否拉取成功。
 
-* `host:port` will host all the available monitor projects
-* `host:port/projects/{project}` will host the metrics meta of a certain project
-* `host:port/yaml/{project}` will host a config YAML of the project's metrics
 
-you can easily navigate in this pages by hyperlink.
+## 扩展与高可用
 
-## Docker Compose
+假如机器很多，云监控 API 可能比较慢，这时候可以把指标分拆多个 Exporter 实例中去。
 
-From `0.3.1`, we provide a docker-compose stack to help users building monitoring stack from scratch. The stack contains:
+HA 和 Prometheus 本身的 HA 方案一样，就是搭完全相同的两套监控。每套部署一台 Prometheus 加上对应的 Exporter。或者直接交给底下的 PaaS 设施来做 Standby。
 
-* aliyun-exporter (this project): Retrieving metrics (and instance information) from Alibaba Cloud.
-* [Prometheus](https://github.com/prometheus/prometheus): Metric storage and alerting calculation.
-* [Alertmanager](https://github.com/prometheus/alertmanager): Alert routing and notifying.
-* [Grafana](https://github.com/grafana/grafana): Dashboards.
-* [prometheus-webhook-dingtalk](https://github.com/timonwong/prometheus-webhook-dingtalk): DingTalk (a.k.a. DingDing) notification integrating.
-
-Here's a detailed launch guide:
-
-```bash
-# config prometheus external host
-export PROMETHEUS_HOST=YOUR_PUBLIC_IP_OR_HOSTNAME
-# config dingtalk robot token
-export DINGTALK_TOKEN=YOUR_DINGTALK_ROBOT_TOEKN
-# config aliyun-exporter credential
-export ALIYUN_REGION=YOUR_REGION
-export ALIYUN_ACCESS_ID=YOUR_ID
-export ALIYUN_ACCESS_SECRET=YOUR_SECRET
-docker-compose up -d
-```
-
-After launching, you can access: 
-
-* grafana: http://localhost:3000
-* prometheus: http://localhost:9090
-* alertmanager: http://localhost:9093
-
-You may customize the configuration of this components by editing the configuration files in `./docker-compose/{component}`
-
-## Telemetry
-
-Request success summary and failure summary are exposed in `cloudmonitor_request_latency_seconds` and `cloudmonitor_failed_request_latency_seconds`.
-
-Each `Project-Metric` pair will have a corresponding metric named `aliyun_{project}_{metric}_up`, which indicates whether this metric are successfully scraped.
-
-## Scale and HA Setup
-
-The CloudMonitor API could be slow if you have large amount of resources. You can separate metrics over multiple exporter instances to scale.
-
-For HA setup, simply duplicate your deployments: 2 * prometheus, and 2 * exporter for each prometheus.
-
-> HA Setup will double your requests, which may run out your quota.
-
-## Contribute
-
-Feel free to open issues and pull requests, any feedback will be highly appreciated!
-
-Please check the [`help wanted`](https://github.com/aylei/aliyun-exporter/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22) label to find issues that are good for getting started.
-
-Besides, contributing to new [alert rules](./docker-compose/prometheus/rules.yml), new [dashboards](./docker-compose/grafana/dashboards) is also welcomed!
-
+> 部署两套会导致请求量会翻倍，要注意每月 API 调用量

@@ -9,14 +9,20 @@ from prometheus_client.core import GaugeMetricFamily, REGISTRY
 from aliyunsdkcore.client import AcsClient
 from aliyunsdkcms.request.v20180308 import QueryMetricLastRequest
 from aliyunsdkrds.request.v20140815 import DescribeDBInstancePerformanceRequest
+from aliyunsdkcdn.request.v20180510 import DescribeDomainSrcHttpCodeDataRequest
+from aliyunsdkcdn.request.v20180510 import DescribeDomainSrcBpsDataRequest
+from aliyunsdkcdn.request.v20180510 import DescribeDomainRealTimeSrcHttpCodeDataRequest
+from aliyunsdkcdn.request.v20180510 import DescribeDomainRealTimeSrcBpsDataRequest
 from ratelimiter import RateLimiter
 
 from aliyun_exporter.info_provider import InfoProvider
 from aliyun_exporter.utils import try_or_else
 
 rds_performance = 'rds_performance'
+cdn_performance = 'cdn_performance'
 special_projects = {
     rds_performance: lambda collector : RDSPerformanceCollector(collector),
+    cdn_performance: lambda collector : CDNPerformanceCollector(collector),
 }
 
 requestSummary = Summary('cloudmonitor_request_latency_seconds', 'CloudMonitor request latency', ['project'])
@@ -92,10 +98,10 @@ class AliyunCollector(object):
             return points
         else:
             logging.error('Error query metrics for {}_{}, the response body don not have Datapoints field, please check you permission or workload' .format(project, metric))
-            return points
+            return None
 
     def parse_label_keys(self, point):
-        return [k for k in point if k not in ['timestamp', 'Maximum', 'Minimum', 'Average']]
+        return [k for k in point if k not in ['timestamp', 'Maximum', 'Minimum', 'Average', 'Sum']]
 
     def format_metric_name(self, project, name):
         return 'aliyun_{}_{}'.format(project, name)
@@ -182,7 +188,7 @@ class RDSPerformanceCollector:
         req = DescribeDBInstancePerformanceRequest.DescribeDBInstancePerformanceRequest()
         req.set_DBInstanceId(id)
         req.set_Key(','.join([metric['name'] for metric in self.parent.metrics[rds_performance]]))
-        now = datetime.utcnow();
+        now = datetime.utcnow()
         now_str = now.replace(second=0, microsecond=0).strftime("%Y-%m-%dT%H:%MZ")
         one_minute_ago_str = (now - timedelta(minutes=1)).replace(second=0, microsecond=0).strftime("%Y-%m-%dT%H:%MZ")
         req.set_StartTime(one_minute_ago_str)
@@ -194,3 +200,135 @@ class RDSPerformanceCollector:
             return []
         data = json.loads(resp)
         return data['PerformanceKeys']['PerformanceKey']
+
+class CDNPerformanceCollector:
+
+    def __init__(self, delegate: AliyunCollector):
+        self.parent = delegate
+
+    def collect(self):
+        for metric_type in self.parent.metrics[cdn_performance]:
+            if metric_type['name'] == 'DescribeDomainSrcHttpCodeData':
+                metrics = self.query_cdn_srccode_metrics()
+                for metric in metrics:
+                    yield from self.parse_cdn_srccode(metric)
+            elif metric_type['name'] == 'DescribeDomainSrcBpsData':
+                metric = self.query_cdn_SBD_metric()
+                yield from self.parse_cdn_SBD(metric)
+            elif metric_type['name'] == 'DescribeDomainRealTimeSrcHttpCodeData':
+                for id in [s.labels['DomainName'] for s in self.parent.info_provider.get_metrics('cdn').samples]:
+                    metrics = self.query_cdn_domain_srccode_metrics(id)
+                    for metric in metrics:
+                        yield from self.parse_cdn_domain_srccode(id, metric)
+            elif metric_type['name'] == 'DescribeDomainRealTimeSrcBpsData':
+                for id in [s.labels['DomainName'] for s in self.parent.info_provider.get_metrics('cdn').samples]:
+                    metrics = self.query_cdn_domain_SBD_metrics(id)
+                    for metric in metrics:
+                        yield from self.parse_cdn_domain_SBD(id, metric)
+
+    def parse_cdn_domain_SBD(self, id, value: dict):
+        metric_name = 'DescribeDomainRealTimeSrcBpsData'
+        gauge = GaugeMetricFamily(
+            self.parent.format_metric_name(cdn_performance, metric_name),
+            '', labels=['cdnPerformance', 'instanceId'])
+        gauge.add_metric([metric_name, id], float(value['Value']))
+        yield gauge
+
+    def parse_cdn_domain_srccode(self, id, value: dict):
+        metrics: list = value['Value']['RealTimeSrcCodeProportionData']
+        if len(metrics) < 1:
+            return
+        metric_name = 'DescribeDomainRealTimeSrcHttpCodeData'
+        for metric in metrics:
+            gauge = GaugeMetricFamily(
+                self.parent.format_metric_name(cdn_performance, metric_name),
+                '', labels=['cdnPerformance', 'instanceId', 'httpCode'])
+            gauge.add_metric([metric_name, id, metric['Code']], float(metric['Proportion']))
+            yield gauge
+
+    def parse_cdn_srccode(self, metric):
+        metric_name = 'DescribeDomainSrcHttpCodeData'
+
+        gauge = GaugeMetricFamily(
+            self.parent.format_metric_name(cdn_performance, metric_name),
+            '', labels=['cdnPerformance', 'httpCode'])
+        gauge.add_metric([metric_name, metric['Code']], float(metric['Proportion']))
+        yield gauge
+
+    def parse_cdn_SBD(self, metric):
+        metric_name = 'DescribeDomainSrcBpsData'
+
+        for k, v in metric.items():
+            if k == "TimeStamp":
+                continue
+            gauge = GaugeMetricFamily(
+                self.parent.format_metric_name(cdn_performance, metric_name),
+                '', labels=['cdnPerformance', 'type'])
+            gauge.add_metric([metric_name, k], float(v))
+            yield gauge
+
+    def query_cdn_domain_SBD_metrics(self, id):
+        req = DescribeDomainRealTimeSrcBpsDataRequest.DescribeDomainRealTimeSrcBpsDataRequest()
+        req.set_DomainName(id)
+        now = datetime.utcnow()
+        # now_str = now.replace(second=0, microsecond=0).strftime("%Y-%m-%dT%H:%MZ")
+        one_minute_ago_str = (now - timedelta(minutes=1)).replace(second=0, microsecond=0).strftime("%Y-%m-%dT%H:%MZ")
+        two_minute_ago_str = (now - timedelta(minutes=2)).replace(second=0, microsecond=0).strftime("%Y-%m-%dT%H:%MZ")
+        req.set_StartTime(two_minute_ago_str)
+        req.set_EndTime(one_minute_ago_str)
+        try:
+            resp = self.parent.client.do_action_with_exception(req)
+        except Exception as e:
+            logging.error('Error request rds performance api', exc_info=e)
+            return []
+        data = json.loads(resp)
+        return data['RealTimeSrcBpsDataPerInterval']['DataModule']
+
+    def query_cdn_domain_srccode_metrics(self, id):
+        req = DescribeDomainRealTimeSrcHttpCodeDataRequest.DescribeDomainRealTimeSrcHttpCodeDataRequest()
+        req.set_DomainName(id)
+        now = datetime.utcnow()
+        # now_str = now.replace(second=0, microsecond=0).strftime("%Y-%m-%dT%H:%MZ")
+        one_minute_ago_str = (now - timedelta(minutes=1)).replace(second=0, microsecond=0).strftime("%Y-%m-%dT%H:%MZ")
+        two_minute_ago_str = (now - timedelta(minutes=2)).replace(second=0, microsecond=0).strftime("%Y-%m-%dT%H:%MZ")
+        req.set_StartTime(two_minute_ago_str)
+        req.set_EndTime(one_minute_ago_str)
+        try:
+            resp = self.parent.client.do_action_with_exception(req)
+        except Exception as e:
+            logging.error('Error request rds performance api', exc_info=e)
+            return []
+        data = json.loads(resp)
+        return data['RealTimeSrcHttpCodeData']['UsageData']
+
+    def query_cdn_srccode_metrics(self,):
+        req = DescribeDomainSrcHttpCodeDataRequest.DescribeDomainSrcHttpCodeDataRequest()
+        now = time.time() - 300
+        start_time = datetime.utcfromtimestamp(now - 600).strftime("%Y-%m-%dT%H:%M:%SZ")
+        end_time = datetime.utcfromtimestamp(now).strftime("%Y-%m-%dT%H:%M:%SZ")
+        req.set_accept_format('json')
+        req.set_StartTime(start_time)
+        req.set_EndTime(end_time)
+        try:
+            resp = self.parent.client.do_action_with_exception(req)
+        except Exception as e:
+            logging.error('Error request rds performance api', exc_info=e)
+            return []
+        data = json.loads(resp)
+        return data['HttpCodeData']['UsageData'][0]['Value']['CodeProportionData']
+
+    def query_cdn_SBD_metric(self):
+        req = DescribeDomainSrcBpsDataRequest.DescribeDomainSrcBpsDataRequest()
+        now = time.time() - 300
+        start_time = datetime.utcfromtimestamp(now - 600).strftime("%Y-%m-%dT%H:%M:%SZ")
+        end_time = datetime.utcfromtimestamp(now).strftime("%Y-%m-%dT%H:%M:%SZ")
+        req.set_accept_format('json')
+        req.set_StartTime(start_time)
+        req.set_EndTime(end_time)
+        try:
+            resp = self.parent.client.do_action_with_exception(req)
+        except Exception as e:
+            logging.error('Error request rds performance api', exc_info=e)
+            return []
+        data = json.loads(resp)
+        return data['SrcBpsDataPerInterval']['DataModule'][0]

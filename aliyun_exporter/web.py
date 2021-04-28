@@ -5,7 +5,7 @@ from flask import (
     Flask, render_template
 )
 from prometheus_client import make_wsgi_app
-from werkzeug.wsgi import DispatcherMiddleware
+from werkzeug.middleware import dispatcher
 
 from aliyun_exporter import CollectorConfig
 from aliyun_exporter.QueryMetricMetaRequest import QueryMetricMetaRequest
@@ -61,7 +61,7 @@ def create_app(config: CollectorConfig):
     app.jinja_env.filters['formatmetric'] = format_metric
     app.jinja_env.filters['formatperiod'] = format_period
 
-    app_dispatch = DispatcherMiddleware(app, {
+    app_dispatch = dispatcher.DispatcherMiddleware(app, {
         '/metrics': make_wsgi_app()
     })
     return app_dispatch

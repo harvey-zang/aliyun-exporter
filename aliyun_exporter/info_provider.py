@@ -1,4 +1,6 @@
 import json
+import time
+import datetime
 
 from aliyunsdkcore.client import AcsClient
 from cachetools import cached, TTLCache
@@ -8,7 +10,12 @@ import aliyunsdkecs.request.v20140526.DescribeInstancesRequest as DescribeECS
 import aliyunsdkrds.request.v20140815.DescribeDBInstancesRequest as DescribeRDS
 import aliyunsdkr_kvstore.request.v20150101.DescribeInstancesRequest as DescribeRedis
 import aliyunsdkslb.request.v20140515.DescribeLoadBalancersRequest as DescribeSLB
+import aliyunsdkslb.request.v20140515.DescribeLoadBalancerAttributeRequest as DescribeSLBAttr
+import aliyunsdkslb.request.v20140515.DescribeLoadBalancerTCPListenerAttributeRequest as DescribeSLBTcpAttr
+import aliyunsdkslb.request.v20140515.DescribeLoadBalancerHTTPListenerAttributeRequest as DescribeSLBHttpAttr
+import aliyunsdkslb.request.v20140515.DescribeLoadBalancerHTTPSListenerAttributeRequest as DescribeSLBHttpsAttr
 import aliyunsdkdds.request.v20151201.DescribeDBInstancesRequest as Mongodb
+import aliyunsdkcdn.request.v20180510.DescribeUserDomainsRequest as DescribeCDN
 
 from aliyun_exporter.utils import try_or_else
 
@@ -36,6 +43,7 @@ class InfoProvider():
         return {
             'ecs': lambda : self.ecs_info(),
             'rds': lambda : self.rds_info(),
+            'cdn': lambda : self.cdn_info(),
             'redis': lambda : self.redis_info(),
             'slb':lambda : self.slb_info(),
             'mongodb':lambda : self.mongodb_info(),
@@ -60,11 +68,47 @@ class InfoProvider():
 
     def slb_info(self) -> GaugeMetricFamily:
         req = DescribeSLB.DescribeLoadBalancersRequest()
-        return self.info_template(req, 'aliyun_meta_slb_info', to_list=lambda data: data['LoadBalancers']['LoadBalancer'])
+        gauge = self.info_template(req, 'aliyun_meta_slb_info', to_list=lambda data: data['LoadBalancers']['LoadBalancer'])
+        gauge_slb_info = None
+        for s in gauge.samples:
+            slb_id = s.labels['LoadBalancerId']
+            req_slb_attr = DescribeSLBAttr.DescribeLoadBalancerAttributeRequest()
+            req_slb_attr.set_LoadBalancerId(slb_id)
+            slb_attrs_resp = self.client.do_action_with_exception(req_slb_attr)
+            slb_attrs_info = json.loads(slb_attrs_resp)
+            for protocol_info in slb_attrs_info['ListenerPortsAndProtocol']['ListenerPortAndProtocol']:
+                protocol = protocol_info['ListenerProtocol']
+                port = protocol_info['ListenerPort']
+                req_slb_proto = None
+                if protocol == 'tcp':
+                    req_slb_proto = DescribeSLBTcpAttr.DescribeLoadBalancerTCPListenerAttributeRequest()
+                elif protocol == 'http':
+                    req_slb_proto = DescribeSLBHttpAttr.DescribeLoadBalancerHTTPListenerAttributeRequest()
+                elif protocol == 'https':
+                    req_slb_proto = DescribeSLBHttpsAttr.DescribeLoadBalancerHTTPSListenerAttributeRequest()
+                req_slb_proto.set_LoadBalancerId(slb_id)
+                req_slb_proto.set_ListenerPort(int(port))
+                slb_protocol_resp = self.client.do_action_with_exception(req_slb_proto)
+                slb_protocol_info: dict = json.loads(slb_protocol_resp)
+                if 'ForwardCode' in slb_protocol_info.keys():
+                    continue
+                Bandwidth = slb_protocol_info['Bandwidth']
+                if gauge_slb_info is None:
+                    gauge_slb_info = GaugeMetricFamily('aliyun_meta_slb_proto_bandwidth', 'protocolBandwidth', labels=['instanceId', 'ListenerProtocol', 'ListenerPort'])
+                gauge_slb_info.add_metric([slb_id, protocol, str(port)], value=float(Bandwidth))
+        return gauge_slb_info
 
     def mongodb_info(self) -> GaugeMetricFamily:
         req = Mongodb.DescribeDBInstancesRequest()
         return self.info_template(req, 'aliyun_meta_mongodb_info', to_list=lambda data: data['DBInstances']['DBInstance'])
+
+    def cdn_info(self) -> GaugeMetricFamily:
+        req = DescribeCDN.DescribeUserDomainsRequest()
+        req.set_DomainStatus('online')
+        nested_handler = {
+            'DomainName': lambda obj: try_or_else(lambda: obj['DomainName'], ''),
+        }
+        return self.info_template(req, 'aliyun_meta_cdn_info', to_list=lambda data: data['Domains']['PageData'])
 
     '''
     Template method to retrieve resource information and transform to metric.
@@ -86,6 +130,19 @@ class InfoProvider():
             gauge.add_metric(labels=self.label_values(instance, label_keys, nested_handler), value=1.0)
         return gauge
 
+    def info_template_bytime(self,
+                      req,
+                      name,
+                      desc='',
+                      label_keys=None,
+                      nested_handler=None,
+                      to_value=(lambda data: data['Instances']['Instance'])) -> GaugeMetricFamily:
+
+        value = self.generator_by_time(req, to_value)
+        gauge = GaugeMetricFamily(name, desc, labels=label_keys)
+        gauge.add_metric(labels=[value], value=1.0)
+        return gauge
+
     def pager_generator(self, req, page_size, page_num, to_list):
         req.set_PageSize(page_size)
         while True:
@@ -94,10 +151,22 @@ class InfoProvider():
             data = json.loads(resp)
             instances = to_list(data)
             for instance in instances:
-                yield instance
+                if 'test' not in instance.get('DomainName'):
+                    yield instance
             if len(instances) < page_size:
                 break
             page_num += 1
+
+    def generator_by_time(self, req, to_value):
+        now = time.time() - 60
+        start_time = datetime.datetime.utcfromtimestamp(now-120).strftime("%Y-%m-%dT%H:%M:%SZ")
+        end_time = datetime.datetime.utcfromtimestamp(now).strftime("%Y-%m-%dT%H:%M:%SZ")
+        req.set_accept_format('json')
+        req.set_StartTime(start_time)
+        req.set_EndTime(end_time)
+        resp = self.client.do_action_with_exception(req)
+        value = to_value(resp)
+        return value
 
     def label_keys(self, instance, nested_handler=None):
         if nested_handler is None:
